@@ -1,0 +1,235 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  student
+  company
+  admin
+}
+
+enum EducationLevel {
+  bac1
+  bac2
+  bac3
+  bac4
+  bac5
+}
+
+enum Availability {
+  immediate
+  onemonth   @map("1month")
+  twomonths  @map("2months")
+  threemonths @map("3months")
+}
+
+enum SubscriptionStatus {
+  free
+  active
+  expired
+  cancelled
+}
+
+enum SubscriptionPlan {
+  monthly
+  yearly
+}
+
+enum MatchStatus {
+  pending
+  contacted
+  interview
+  accepted
+  rejected
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  password_hash String
+  role          Role
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  is_verified   Boolean  @default(false)
+  is_active     Boolean  @default(true)
+
+  // Relations
+  student      Student?
+  company      Company?
+  messagesSent Message[] @relation("SentMessages")
+  messagesRecv Message[] @relation("ReceivedMessages")
+  notifications Notification[]
+  testimonials  Testimonial[]
+
+  @@map("users")
+}
+
+model Student {
+  id                 String   @id @default(uuid())
+  user_id            String   @unique
+  first_name         String?
+  last_name          String?
+  phone_whatsapp     String?
+  city               String?
+  date_of_birth      DateTime? @db.Date
+  education_level    EducationLevel?
+  field_of_study     String?
+  school             String?
+  skills             String[]
+  availability       Availability?
+  stage_type         String?
+  sector_preference  String?
+  motivation         String?
+  wants_premium_cv   Boolean  @default(false)
+  cv_file_url        String?
+  profile_photo_url  String?
+  profile_completion Int      @default(0)
+  created_at         DateTime @default(now())
+
+  // Relations
+  user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  matches Match[]
+
+  @@map("students")
+}
+
+model Company {
+  id                 String   @id @default(uuid())
+  user_id            String   @unique
+  company_name       String
+  sector             String?
+  size               String?
+  city               String?
+  website            String?
+  contact_first_name String?
+  contact_last_name  String?
+  contact_position   String?
+  contact_phone      String?
+  profile_searched   String?
+  level_required     String?
+  stage_duration     String?
+  job_description    String?
+  subscription_status SubscriptionStatus @default(free)
+  subscription_start DateTime?
+  subscription_end   DateTime?
+  logo_url           String?
+  created_at         DateTime @default(now())
+
+  // Relations
+  user              User               @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  internship_offers InternshipOffer[]
+  matches           Match[]
+  subscriptions     Subscription[]
+
+  @@map("companies")
+}
+
+model InternshipOffer {
+  id             String   @id @default(uuid())
+  company_id     String
+  title          String
+  description    String?
+  domain         String?
+  level_required String?
+  duration       String?
+  city           String?
+  is_active      Boolean  @default(true)
+  views_count    Int      @default(0)
+  created_at     DateTime @default(now())
+  expires_at     DateTime?
+
+  // Relations
+  company Company @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  matches Match[]
+
+  @@map("internship_offers")
+}
+
+model Match {
+  id          String   @id @default(uuid())
+  student_id  String
+  offer_id    String
+  company_id  String
+  match_score Int      @default(0)
+  status      MatchStatus @default(pending)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  // Relations
+  student Student         @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  offer   InternshipOffer @relation(fields: [offer_id], references: [id], onDelete: Cascade)
+  company Company         @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@map("matches")
+}
+
+model Message {
+  id          String   @id @default(uuid())
+  sender_id   String
+  receiver_id String
+  match_id    String
+  content     String
+  is_read     Boolean  @default(false)
+  created_at  DateTime @default(now())
+
+  // Relations
+  sender   User  @relation("SentMessages", fields: [sender_id], references: [id], onDelete: Cascade)
+  receiver User  @relation("ReceivedMessages", fields: [receiver_id], references: [id], onDelete: Cascade)
+  match    Match @relation(fields: [match_id], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+model Subscription {
+  id             String   @id @default(uuid())
+  company_id     String
+  plan           SubscriptionPlan
+  amount         Decimal  @db.Decimal(10, 2)
+  currency       String   @default("MAD")
+  status         SubscriptionStatus @default(active)
+  payment_method String?
+  started_at     DateTime @default(now())
+  expires_at     DateTime?
+
+  // Relations
+  company Company @relation(fields: [company_id], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  user_id    String
+  type       String
+  title      String
+  message    String
+  is_read    Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model Testimonial {
+  id          String   @id @default(uuid())
+  user_id     String
+  role        Role
+  content     String
+  rating      Int      @default(5)
+  city        String?
+  is_approved Boolean  @default(false)
+  created_at  DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("testimonials")
+}
