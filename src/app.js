@@ -8,10 +8,8 @@ const app = express();
 
 // Security Middlewares
 app.use(helmet());
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5500',
-  credentials: true
-}));
+app.use(cors()); // Allow all origins for now to fix production connectivity issues
+
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
