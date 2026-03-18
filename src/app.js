@@ -43,6 +43,10 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'success', message: 'StageLink API is running' });
 });
 
+app.get('/', (req, res) => {
+  res.status(200).send('StageLink API Online');
+});
+
 // Global Error Handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -50,6 +54,12 @@ app.use((err, req, res, next) => {
     status: 'error',
     message: err.message || 'Internal Server Error'
   });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server is running on port ${PORT}`);
+  console.log('Database URL detected:', process.env.DATABASE_URL ? 'YES' : 'NO');
 });
 
 module.exports = app;
