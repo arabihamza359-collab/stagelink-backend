@@ -8,7 +8,10 @@ const app = express();
 
 // Security Middlewares
 app.use(helmet());
-app.use(cors()); // Allow all origins for now to fix production connectivity issues
+app.use(cors({
+  origin: ['https://stagelink-ecru.vercel.app', 'https://stagelink-fxj8gr6kp-arabihamza359-collabs-projects.vercel.app'],
+  credentials: true
+}));
 
 
 const limiter = rateLimit({
