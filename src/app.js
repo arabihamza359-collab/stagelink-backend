@@ -8,10 +8,12 @@ const app = express();
 
 // Security Middlewares
 app.use(helmet());
-app.use(cors({
-  origin: ['https://stagelink-ecru.vercel.app', 'https://stagelink-fxj8gr6kp-arabihamza359-collabs-projects.vercel.app'],
-  credentials: true
-}));
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - Origin: ${req.get('origin')}`);
+  next();
+});
+app.use(cors()); // Temporarily allow all for debugging
+
 
 
 const limiter = rateLimit({
